@@ -1,0 +1,33 @@
+# Build artifacts
+.build/
+build/
+DerivedData/
+
+# Xcode
+*.xcodeproj
+*.xcworkspace
+*.swiftpm
+
+# IDE
+.vscode/
+.claude/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+*.app/
+
+# Output files
+output_text.json
+test.wav
+recording.wav
+global_recording.wav
+
+# Temporary files
+*.tmp
+*.log
