@@ -50,13 +50,21 @@ class AccessibilityManager: ObservableObject {
     }
     
     func insertTextAtCursor(_ text: String) {
-        guard hasAccessibilityPermissions else { return }
+        print("insertTextAtCursor called with: '\(text)'")
+        print("hasAccessibilityPermissions: \(hasAccessibilityPermissions)")
         
+        guard hasAccessibilityPermissions else { 
+            print("No accessibility permissions - cannot insert text")
+            return 
+        }
+        
+        print("Attempting to insert text via pasteboard...")
         let pasteboard = NSPasteboard.general
         let savedContents = pasteboard.pasteboardItems?.first?.data(forType: .string)
         
         pasteboard.clearContents()
-        pasteboard.setString(text, forType: .string)
+        let success = pasteboard.setString(text, forType: .string)
+        print("Pasteboard setString success: \(success)")
         
         let source = CGEventSource(stateID: .hidSystemState)
         
@@ -66,13 +74,16 @@ class AccessibilityManager: ObservableObject {
         let cmdVUp = CGEvent(keyboardEventSource: source, virtualKey: CGKeyCode(kVK_ANSI_V), keyDown: false)
         cmdVUp?.flags = CGEventFlags.maskCommand
         
+        print("Posting Cmd+V events...")
         cmdVDown?.post(tap: CGEventTapLocation.cghidEventTap)
         cmdVUp?.post(tap: CGEventTapLocation.cghidEventTap)
+        print("Events posted")
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             if let savedContents = savedContents {
                 pasteboard.clearContents()
                 pasteboard.setData(savedContents, forType: .string)
+                print("Restored pasteboard contents")
             }
         }
     }

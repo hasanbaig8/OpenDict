@@ -40,6 +40,10 @@ class GlobalHotkeyManager: ObservableObject {
                     self.hotkeyReleased()
                 }
             }
+        } else if event.keyCode == kVK_Escape && event.type == .keyDown {
+            DispatchQueue.main.async {
+                self.escapePressed()
+            }
         }
     }
     
@@ -53,6 +57,10 @@ class GlobalHotkeyManager: ObservableObject {
         guard isHotkeyPressed else { return }
         isHotkeyPressed = false
         audioRecorder?.stopGlobalRecording()
+    }
+    
+    private func escapePressed() {
+        audioRecorder?.cancelTranscription()
     }
     
     private func cleanup() {

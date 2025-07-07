@@ -4,6 +4,7 @@ import json
 import os
 import pickle
 import time
+import tempfile
 
 def get_model_cache_path():
     """Get the path for the cached model file"""
@@ -57,9 +58,9 @@ if __name__ == "__main__":
         result = transcribe_audio(input_file_path)
         output_data = {"text": result}
         
-        # Get the directory of the input file
-        input_dir = os.path.dirname(input_file_path)
-        output_path = os.path.join(input_dir, "output_text.json")
+        # Use temp directory for output
+        temp_dir = tempfile.gettempdir()
+        output_path = os.path.join(temp_dir, "opendict_output.json")
         
         # Write the result to output_text.json
         with open(output_path, 'w', encoding='utf-8') as f:

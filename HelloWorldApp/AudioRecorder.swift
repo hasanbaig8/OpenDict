@@ -4,6 +4,7 @@ import Foundation
 class AudioRecorder: NSObject, ObservableObject {
     private var audioRecorder: AVAudioRecorder?
     private var recordingTimer: Timer?
+    private var transcriptionClient: SimpleTranscriptionClient?
     
     @Published var isGlobalRecording = false
     @Published var isTranscribing = false
@@ -11,8 +12,13 @@ class AudioRecorder: NSObject, ObservableObject {
     var accessibilityManager: AccessibilityManager?
     
     private var globalAudioURL: URL {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return documentsPath.appendingPathComponent("global_recording.wav")
+        let tempDir = FileManager.default.temporaryDirectory
+        return tempDir.appendingPathComponent("opendict_recording.wav")
+    }
+    
+    override init() {
+        super.init()
+        transcriptionClient = SimpleTranscriptionClient()
     }
     
     func startGlobalRecording() {
@@ -52,52 +58,32 @@ class AudioRecorder: NSObject, ObservableObject {
         
         isTranscribing = true
         
-        let task = Process()
-        let bundle = Bundle.main
-        let pythonPath = bundle.path(forResource: "venv/bin/python", ofType: nil) ?? "/Users/hasanbaig/Downloads/Code/opendict/venv/bin/python"
-        let scriptPath = bundle.path(forResource: "transcribe", ofType: "py") ?? "/Users/hasanbaig/Downloads/Code/opendict/transcribe.py"
-        
-        task.launchPath = pythonPath
-        task.arguments = [scriptPath, globalAudioURL.path]
-        
-        let pipe = Pipe()
-        task.standardOutput = pipe
-        task.standardError = pipe
-        
-        task.terminationHandler = { _ in
+        transcriptionClient?.transcribeAudio(audioFilePath: globalAudioURL.path) { [weak self] result in
             DispatchQueue.main.async {
-                self.isTranscribing = false
-                self.loadGlobalTranscribedText()
-            }
-        }
-        
-        do {
-            try task.run()
-        } catch {
-            print("Failed to run transcription: \(error)")
-            DispatchQueue.main.async {
-                self.isTranscribing = false
+                self?.isTranscribing = false
+                
+                switch result {
+                case .success(let text):
+                    print("Transcription successful: '\(text)'")
+                    print("Has accessibility permissions: \(self?.accessibilityManager?.hasAccessibilityPermissions ?? false)")
+                    
+                    if let accessibilityManager = self?.accessibilityManager {
+                        if accessibilityManager.hasAccessibilityPermissions {
+                            print("Inserting text at cursor")
+                            accessibilityManager.insertTextAtCursor(text)
+                        } else {
+                            print("No accessibility permissions - cannot insert text")
+                        }
+                    } else {
+                        print("No accessibility manager")
+                    }
+                case .failure(let error):
+                    print("Transcription failed: \(error)")
+                }
             }
         }
     }
     
-    private func loadGlobalTranscribedText() {
-        let outputURL = globalAudioURL.deletingLastPathComponent().appendingPathComponent("output_text.json")
-        
-        guard FileManager.default.fileExists(atPath: outputURL.path) else {
-            return
-        }
-        
-        do {
-            let data = try Data(contentsOf: outputURL)
-            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let text = json["text"] as? String {
-                accessibilityManager?.insertTextAtCursor(text)
-            }
-        } catch {
-            print("Failed to load transcribed text: \(error)")
-        }
-    }
     
     private func startRecordingTimer() {
         recordingTimer?.invalidate()
@@ -113,6 +99,17 @@ class AudioRecorder: NSObject, ObservableObject {
     private func stopRecordingTimer() {
         recordingTimer?.invalidate()
         recordingTimer = nil
+    }
+    
+    func cancelTranscription() {
+        guard isTranscribing else { return }
+        
+        // For now, we can't cancel the network request easily, so just reset state
+        isTranscribing = false
+    }
+    
+    func shutdown() {
+        transcriptionClient?.shutdown()
     }
     
 }
