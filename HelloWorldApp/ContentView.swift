@@ -1,144 +1,86 @@
 import SwiftUI
 
-struct ContentView: View {
+struct MenuBarContentView: View {
     @EnvironmentObject var audioRecorder: AudioRecorder
     @EnvironmentObject var accessibilityManager: AccessibilityManager
-    @EnvironmentObject var hotkeyManager: GlobalHotkeyManager
     
     var body: some View {
-        VStack(spacing: 20) {
-            Text("OpenDict")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "mic.fill")
+                    .foregroundColor(.blue)
+                Text("OpenDict")
+                    .font(.headline)
+                    .fontWeight(.semibold)
+            }
             
-            Text("Global Hotkey: Ctrl+Space")
-                .font(.caption)
-                .foregroundColor(.secondary)
+            if audioRecorder.isGlobalRecording {
+                HStack {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 8, height: 8)
+                    Text("Recording...")
+                        .foregroundColor(.red)
+                        .font(.system(size: 14, weight: .medium))
+                }
+            } else if audioRecorder.isTranscribing {
+                HStack {
+                    Circle()
+                        .fill(Color.orange)
+                        .frame(width: 8, height: 8)
+                    Text("Transcribing...")
+                        .foregroundColor(.orange)
+                        .font(.system(size: 14, weight: .medium))
+                }
+            } else {
+                Text("Hold Ctrl+Space to record")
+                    .font(.system(size: 13))
+                    .foregroundColor(.secondary)
+            }
             
             if !accessibilityManager.hasAccessibilityPermissions {
-                VStack(spacing: 10) {
-                    Text("⚠️ Accessibility permissions required")
-                        .font(.headline)
+                Divider()
+                
+                VStack(spacing: 6) {
+                    Text("Accessibility permission needed")
+                        .font(.caption)
                         .foregroundColor(.orange)
                     
-                    Text("To use the global hotkey feature, please grant accessibility permissions.")
-                        .font(.caption)
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(.secondary)
-                    
-                    Button("Grant Permissions") {
+                    Button("Grant Permission") {
                         accessibilityManager.requestAccessibilityPermissions()
                     }
                     .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                 }
-                .padding()
-                .background(Color.orange.opacity(0.1))
-                .cornerRadius(8)
             }
             
-            if hotkeyManager.isHotkeyPressed {
-                VStack {
-                    Text("🎤 Recording...")
-                        .font(.headline)
-                        .foregroundColor(.red)
-                    Text("Release Ctrl+Space to transcribe")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                .padding()
-                .background(Color.red.opacity(0.1))
-                .cornerRadius(8)
-            }
+            Divider()
             
-            HStack(spacing: 15) {
-                Button(action: {
-                    if audioRecorder.isRecording {
-                        audioRecorder.stopRecording()
-                    } else {
-                        audioRecorder.startRecording()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: audioRecorder.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                        Text(audioRecorder.isRecording ? "Stop" : "Record")
-                    }
+            HStack(spacing: 12) {
+                Button("Restart") {
+                    restartApp()
                 }
-                .font(.title2)
-                .buttonStyle(.borderedProminent)
-                .foregroundColor(audioRecorder.isRecording ? .red : .blue)
-                
-                Button(action: {
-                    if audioRecorder.isPlaying {
-                        audioRecorder.stopPlaying()
-                    } else {
-                        audioRecorder.startPlaying()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: audioRecorder.isPlaying ? "stop.circle.fill" : "play.circle.fill")
-                        Text(audioRecorder.isPlaying ? "Stop" : "Play")
-                    }
-                }
-                .font(.title2)
                 .buttonStyle(.bordered)
-                .disabled(!audioRecorder.hasRecording || audioRecorder.isRecording)
+                .controlSize(.small)
                 
-                Button(action: {
-                    audioRecorder.transcribeAudio()
-                }) {
-                    HStack {
-                        Image(systemName: audioRecorder.isTranscribing ? "waveform.circle" : "text.bubble")
-                        Text(audioRecorder.isTranscribing ? "Transcribing..." : "Transcribe")
-                    }
+                Button("Quit") {
+                    NSApplication.shared.terminate(nil)
                 }
-                .font(.title2)
                 .buttonStyle(.bordered)
-                .disabled(!audioRecorder.hasRecording || audioRecorder.isRecording || audioRecorder.isTranscribing)
-            }
-            
-            if audioRecorder.isRecording {
-                Text("Recording...")
-                    .font(.caption)
-                    .foregroundColor(.red)
-            } else if audioRecorder.isPlaying {
-                Text("Playing...")
-                    .font(.caption)
-                    .foregroundColor(.blue)
-            } else if audioRecorder.isTranscribing {
-                Text("Transcribing audio...")
-                    .font(.caption)
-                    .foregroundColor(.orange)
-            } else if audioRecorder.hasRecording {
-                Text("Recording ready to play")
-                    .font(.caption)
-                    .foregroundColor(.green)
-            }
-            
-            if !audioRecorder.transcribedText.isEmpty {
-                ScrollView {
-                    Text("Transcribed Text:")
-                        .font(.headline)
-                        .padding(.top)
-                    
-                    Text(audioRecorder.transcribedText)
-                        .font(.body)
-                        .padding()
-                        .background(Color.gray.opacity(0.1))
-                        .cornerRadius(8)
-                        .textSelection(.enabled)
-                }
-                .frame(maxHeight: 150)
+                .controlSize(.small)
             }
         }
-        .frame(width: 500, height: 400)
-        .padding()
+        .padding(16)
+        .frame(width: 280)
     }
-}
-
-#Preview {
-    ContentView()
-        .environmentObject(AudioRecorder())
-        .environmentObject(AccessibilityManager())
-        .environmentObject(GlobalHotkeyManager())
+    
+    private func restartApp() {
+        let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
+        let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
+        let task = Process()
+        task.launchPath = "/usr/bin/open"
+        task.arguments = [path]
+        task.launch()
+        NSApplication.shared.terminate(nil)
+    }
 } 

@@ -1,10 +1,8 @@
 import Foundation
-import Carbon
-import ApplicationServices
 import Cocoa
+import Carbon
 
 class GlobalHotkeyManager: ObservableObject {
-    private var eventHotKeyRef: EventHotKeyRef?
     @Published var isHotkeyPressed = false
     private var monitors: [Any] = []
     
@@ -19,7 +17,6 @@ class GlobalHotkeyManager: ObservableObject {
     }
     
     private func setupGlobalHotkey() {
-        // Add both global and local monitors for comprehensive coverage
         if let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp], handler: { event in
             self.handleHotkeyEvent(event)
         }) {
@@ -35,7 +32,6 @@ class GlobalHotkeyManager: ObservableObject {
     }
     
     private func handleHotkeyEvent(_ event: NSEvent) {
-        // Check for Ctrl+Space
         if event.keyCode == kVK_Space && event.modifierFlags.contains(.control) {
             DispatchQueue.main.async {
                 if event.type == .keyDown {
@@ -50,16 +46,12 @@ class GlobalHotkeyManager: ObservableObject {
     private func hotkeyPressed() {
         guard !isHotkeyPressed else { return }
         isHotkeyPressed = true
-        
-        // Start recording
         audioRecorder?.startGlobalRecording()
     }
     
     private func hotkeyReleased() {
         guard isHotkeyPressed else { return }
         isHotkeyPressed = false
-        
-        // Stop recording and transcribe
         audioRecorder?.stopGlobalRecording()
     }
     
