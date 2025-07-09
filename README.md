@@ -136,7 +136,7 @@ OpenDict follows a client-server architecture:
 <details>
 <summary>Click to expand Swift components details</summary>
 
-#### 1. **HelloWorldApp.swift** (`HelloWorldApp/HelloWorldApp.swift`)
+#### 1. **OpenDictApp.swift** (`OpenDictApp/OpenDictApp.swift`)
 - **Purpose**: Main app delegate and entry point
 - **Key Responsibilities**:
   - Manages app lifecycle and startup
@@ -144,7 +144,7 @@ OpenDict follows a client-server architecture:
   - Coordinates all managers and components
   - Handles menu bar interface and status updates
 
-#### 2. **AudioRecorder.swift** (`HelloWorldApp/AudioRecorder.swift`)
+#### 2. **AudioRecorder.swift** (`OpenDictApp/AudioRecorder.swift`)
 - **Purpose**: Handles audio recording functionality
 - **Key Features**:
   - Uses AVFoundation for audio capture
@@ -152,7 +152,7 @@ OpenDict follows a client-server architecture:
   - Coordinates with transcription client
   - Publishes state changes for UI updates
 
-#### 3. **GlobalHotkeyManager.swift** (`HelloWorldApp/GlobalHotkeyManager.swift`)
+#### 3. **GlobalHotkeyManager.swift** (`OpenDictApp/GlobalHotkeyManager.swift`)
 - **Purpose**: Manages global keyboard shortcuts
 - **Key Features**:
   - Monitors `Ctrl+Space` for recording trigger
@@ -160,7 +160,7 @@ OpenDict follows a client-server architecture:
   - Uses Carbon framework for low-level keyboard events
   - Coordinates with AudioRecorder for recording control
 
-#### 4. **AccessibilityManager.swift** (`HelloWorldApp/AccessibilityManager.swift`)
+#### 4. **AccessibilityManager.swift** (`OpenDictApp/AccessibilityManager.swift`)
 - **Purpose**: Handles accessibility permissions and text insertion
 - **Key Features**:
   - Monitors accessibility permission status
@@ -168,7 +168,7 @@ OpenDict follows a client-server architecture:
   - Uses pasteboard and keyboard events for text insertion
   - Preserves existing clipboard contents
 
-#### 5. **ContentView.swift** (`HelloWorldApp/ContentView.swift`)
+#### 5. **ContentView.swift** (`OpenDictApp/ContentView.swift`)
 - **Purpose**: SwiftUI interface for menu bar popover
 - **Key Features**:
   - Displays app status and recording state
@@ -176,7 +176,7 @@ OpenDict follows a client-server architecture:
   - Provides restart and quit functionality
   - Real-time status updates
 
-#### 6. **SimpleTranscriptionClient.swift** (`HelloWorldApp/SimpleTranscriptionClient.swift`)
+#### 6. **SimpleTranscriptionClient.swift** (`OpenDictApp/SimpleTranscriptionClient.swift`)
 - **Purpose**: Handles communication with Python transcription server
 - **Key Features**:
   - Socket-based communication (TCP on port 8765)
@@ -184,7 +184,7 @@ OpenDict follows a client-server architecture:
   - Handles server responses and error states
   - Supports graceful shutdown
 
-#### 7. **TranscriptionClient.swift** (`HelloWorldApp/TranscriptionClient.swift`)
+#### 7. **TranscriptionClient.swift** (`OpenDictApp/TranscriptionClient.swift`)
 - **Purpose**: Alternative Network framework-based transcription client
 - **Key Features**:
   - Uses modern NWConnection for networking
@@ -255,7 +255,7 @@ Both Python components implement intelligent model caching:
   - Target name: OpenDict
   - Source path: HelloWorldApp directory
 
-#### 2. **Info.plist** (`HelloWorldApp/Info.plist`)
+#### 2. **Info.plist** (`OpenDictApp/Info.plist`)
 - **Purpose**: macOS app configuration
 - **Key Settings**:
   - Bundle identifier and version
@@ -294,8 +294,8 @@ Both Python components implement intelligent model caching:
 
 ```
 opendict/
-├── HelloWorldApp/           # Swift source files
-│   ├── HelloWorldApp.swift  # Main app delegate
+├── OpenDictApp/           # Swift source files
+│   ├── OpenDictApp.swift  # Main app delegate
 │   ├── AudioRecorder.swift  # Audio recording logic
 │   ├── GlobalHotkeyManager.swift # Keyboard shortcuts
 │   ├── AccessibilityManager.swift # Text insertion

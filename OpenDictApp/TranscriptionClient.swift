@@ -5,15 +5,15 @@ class TranscriptionClient: ObservableObject {
     private var connection: NWConnection?
     private let port: UInt16 = 8765
     private let host = "localhost"
-    
+
     init() {
         setupConnection()
     }
-    
+
     private func setupConnection() {
         let nwEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port))
         connection = NWConnection(to: nwEndpoint, using: .tcp)
-        
+
         connection?.stateUpdateHandler = { [weak self] state in
             switch state {
             case .ready:
@@ -27,16 +27,16 @@ class TranscriptionClient: ObservableObject {
                 break
             }
         }
-        
+
         connection?.start(queue: .global(qos: .utility))
     }
-    
+
     private func reconnect() {
         DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0) {
             self.setupConnection()
         }
     }
-    
+
     func transcribeAudio(audioFilePath: String, completion: @escaping (Result<String, Error>) -> Void) {
         // Ensure connection is ready, retry if needed
         waitForConnection { [weak self] success in
@@ -44,28 +44,28 @@ class TranscriptionClient: ObservableObject {
                 completion(.failure(TranscriptionError.connectionNotReady))
                 return
             }
-            
+
             guard let self = self, let connection = self.connection else {
                 completion(.failure(TranscriptionError.connectionNotReady))
                 return
             }
-            
+
             let request: [String: Any] = [
                 "action": "transcribe",
                 "audio_file": audioFilePath
             ]
-            
+
             do {
                 let requestData = try JSONSerialization.data(withJSONObject: request)
                 print("Sending transcription request for: \(audioFilePath)")
-                
+
                 connection.send(content: requestData, completion: .contentProcessed { error in
                     if let error = error {
                         print("Send error: \(error)")
                         completion(.failure(error))
                         return
                     }
-                    
+
                     print("Request sent, waiting for response...")
                     // Receive response
                     connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { data, _, isComplete, error in
@@ -74,19 +74,19 @@ class TranscriptionClient: ObservableObject {
                             completion(.failure(error))
                             return
                         }
-                        
+
                         guard let data = data else {
                             print("No data received")
                             completion(.failure(TranscriptionError.noResponse))
                             return
                         }
-                        
+
                         print("Received \(data.count) bytes")
-                        
+
                         do {
                             let response = try JSONSerialization.jsonObject(with: data) as? [String: Any]
                             print("Response: \(response ?? [:])")
-                            
+
                             if let status = response?["status"] as? String {
                                 if status == "success", let text = response?["text"] as? String {
                                     completion(.success(text))
@@ -109,17 +109,17 @@ class TranscriptionClient: ObservableObject {
             }
         }
     }
-    
+
     private func waitForConnection(completion: @escaping (Bool) -> Void) {
         if connection?.state == .ready {
             completion(true)
             return
         }
-        
+
         // Wait up to 5 seconds for connection
         var attempts = 0
         let maxAttempts = 50
-        
+
         func checkConnection() {
             if connection?.state == .ready {
                 completion(true)
@@ -132,17 +132,17 @@ class TranscriptionClient: ObservableObject {
                 completion(false)
             }
         }
-        
+
         checkConnection()
     }
-    
+
     func shutdown() {
         guard let connection = connection else { return }
-        
+
         let request: [String: Any] = [
             "action": "shutdown"
         ]
-        
+
         do {
             let requestData = try JSONSerialization.data(withJSONObject: request)
             connection.send(content: requestData, completion: .contentProcessed { _ in
@@ -152,7 +152,7 @@ class TranscriptionClient: ObservableObject {
             connection.cancel()
         }
     }
-    
+
     deinit {
         connection?.cancel()
     }
@@ -164,7 +164,7 @@ enum TranscriptionError: Error, LocalizedError {
     case serverError(String)
     case unknownResponse
     case invalidResponse
-    
+
     var errorDescription: String? {
         switch self {
         case .connectionNotReady:

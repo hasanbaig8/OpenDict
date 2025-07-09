@@ -89,7 +89,7 @@ jobs:
 
     - name: Run SwiftFormat check
       run: |
-        swiftformat --lint HelloWorldApp/
+        swiftformat --lint OpenDictApp/
 
     - name: Build Swift application
       run: |

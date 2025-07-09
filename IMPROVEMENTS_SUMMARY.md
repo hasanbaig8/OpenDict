@@ -108,7 +108,7 @@ This document summarizes the comprehensive improvements made to transform OpenDi
 
 ```
 opendict/
-├── 📁 HelloWorldApp/              # Swift source code
+├── 📁 OpenDictApp/                # Swift source code
 ├── 📁 config/                     # Configuration files
 │   ├── development.json
 │   └── production.json

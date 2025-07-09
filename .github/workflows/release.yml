@@ -74,7 +74,7 @@ jobs:
         cp -r venv OpenDict.app/Contents/Resources/
 
         # Copy Info.plist
-        cp HelloWorldApp/Info.plist OpenDict.app/Contents/
+        cp OpenDictApp/Info.plist OpenDict.app/Contents/
 
         # Copy icon
         cp OpenDict.icns OpenDict.app/Contents/Resources/

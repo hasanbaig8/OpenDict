@@ -15,7 +15,7 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "OpenDict",
-            path: "HelloWorldApp"
+            path: "OpenDictApp"
         )
     ]
-) 
+)

@@ -67,7 +67,7 @@ format:
 	venv/bin/python -m black .
 	venv/bin/python -m isort .
 	@echo "Formatting Swift code..."
-	-swiftformat HelloWorldApp/
+	-swiftformat OpenDictApp/
 	@echo "Formatting completed."
 
 type-check:

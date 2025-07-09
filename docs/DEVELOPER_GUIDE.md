@@ -84,7 +84,7 @@ OpenDict follows a client-server architecture with the following components:
 
 #### Swift Components
 
-1. **App Delegate** (`HelloWorldApp.swift`):
+1. **App Delegate** (`OpenDictApp.swift`):
    - Application lifecycle management
    - Component initialization and coordination
    - Menu bar and status item management
@@ -207,8 +207,8 @@ OpenDict follows a client-server architecture with the following components:
 
 ```
 opendict/
-├── HelloWorldApp/              # Swift source code
-│   ├── HelloWorldApp.swift     # Main app delegate
+├── OpenDictApp/              # Swift source code
+│   ├── OpenDictApp.swift       # Main app delegate
 │   ├── AudioRecorder.swift     # Audio recording logic
 │   ├── GlobalHotkeyManager.swift # Hotkey handling
 │   ├── AccessibilityManager.swift # Accessibility integration
@@ -441,10 +441,10 @@ bandit -r .
 #### Swift
 ```bash
 # Format code
-swiftformat HelloWorldApp/
+swiftformat OpenDictApp/
 
 # Lint code (requires SwiftLint)
-swiftlint HelloWorldApp/
+swiftlint OpenDictApp/
 ```
 
 ### Pre-commit Hooks

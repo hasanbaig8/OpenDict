@@ -3,7 +3,7 @@ import SwiftUI
 struct MenuBarContentView: View {
     @EnvironmentObject var audioRecorder: AudioRecorder
     @EnvironmentObject var accessibilityManager: AccessibilityManager
-    
+
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -15,7 +15,7 @@ struct MenuBarContentView: View {
                             .font(.headline)
                             .fontWeight(.semibold)
                     }
-                    
+
                     if audioRecorder.isGlobalRecording {
                         HStack {
                             Circle()
@@ -39,15 +39,15 @@ struct MenuBarContentView: View {
                             .font(.system(size: 13))
                             .foregroundColor(.secondary)
                     }
-                    
+
                     if !accessibilityManager.hasAccessibilityPermissions {
                         Divider()
-                        
+
                         VStack(spacing: 6) {
                             Text("Accessibility permission needed")
                                 .font(.caption)
                                 .foregroundColor(.orange)
-                            
+
                             Button("Grant Permission") {
                                 accessibilityManager.requestAccessibilityPermissions()
                             }
@@ -66,7 +66,7 @@ struct MenuBarContentView: View {
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.small)
-                
+
                 Button("Quit") {
                     NSApplication.shared.terminate(nil)
                 }
@@ -78,7 +78,7 @@ struct MenuBarContentView: View {
         .frame(width: 280)
         .frame(minHeight: 220, maxHeight: 320)
     }
-    
+
     private func restartApp() {
         let url = URL(fileURLWithPath: Bundle.main.resourcePath!)
         let path = url.deletingLastPathComponent().deletingLastPathComponent().absoluteString
@@ -88,4 +88,4 @@ struct MenuBarContentView: View {
         task.launch()
         NSApplication.shared.terminate(nil)
     }
-} 
+}

@@ -258,7 +258,7 @@ isort --check-only .
 #### Swift
 ```bash
 # Format code
-swiftformat HelloWorldApp/
+swiftformat OpenDictApp/
 
 # Check formatting
 swiftformat --lint HelloWorldApp/
@@ -283,7 +283,7 @@ bandit -r .
 #### Swift
 ```bash
 # Static analysis (if available)
-swiftlint HelloWorldApp/
+swiftlint OpenDictApp/
 ```
 
 ## Testing
