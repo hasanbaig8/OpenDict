@@ -1,0 +1,59 @@
+repos:
+  # Python formatting and linting
+  - repo: https://github.com/psf/black
+    rev: 23.9.1
+    hooks:
+      - id: black
+        language_version: python3
+        files: '\.py$'
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
+    hooks:
+      - id: flake8
+        files: '\.py$'
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        files: '\.py$'
+
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.6.1
+  #   hooks:
+  #     - id: mypy
+  #       files: '\.py$'
+  #       additional_dependencies: [types-requests]
+
+  # Swift formatting (if SwiftFormat is available)
+  - repo: local
+    hooks:
+      - id: swiftformat
+        name: SwiftFormat
+        entry: swiftformat
+        language: system
+        files: '\.swift$'
+        pass_filenames: false
+        always_run: false
+
+  # General hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: mixed-line-ending
+
+  # Security checks
+  # - repo: https://github.com/PyCQA/bandit
+  #   rev: 1.7.5
+  #   hooks:
+  #     - id: bandit
+  #       files: '\.py$'
+  #       args: ['-x', 'tests/']
