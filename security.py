@@ -14,7 +14,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from config import get_config
 from error_handling import ErrorCode, OpenDictError
@@ -48,7 +48,7 @@ class RateLimiter:
     def __init__(self, max_requests: int = 60, window_seconds: int = 60):
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self.requests = {}  # client_id -> list of timestamps
+        self.requests: Dict[str, List[float]] = {}  # client_id -> list of timestamps
         self.logger = get_logger()
 
     def is_allowed(self, client_id: str) -> bool:
@@ -98,7 +98,9 @@ class TokenManager:
 
     def __init__(self, secret_key: Optional[str] = None):
         self.secret_key = secret_key or self._generate_secret_key()
-        self.tokens = {}  # token -> {client_id, created_at, expires_at}
+        self.tokens: Dict[
+            str, Dict[str, Any]
+        ] = {}  # token -> {client_id, created_at, expires_at}
         self.logger = get_logger()
 
     def _generate_secret_key(self) -> str:
@@ -394,7 +396,7 @@ class SecurityManager:
                 "Authentication failed", client_id=client_id, reason=result
             )
 
-        return is_valid, result
+        return is_valid, result or "Unknown error"
 
     def check_rate_limit(self, client_id: str) -> bool:
         """Check if client is within rate limits."""

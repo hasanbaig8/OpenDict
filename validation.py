@@ -587,6 +587,7 @@ class DataSanitizer:
             clean_key = self.sanitize_string(str(key))
 
             # Sanitize value
+            clean_value: Any
             if isinstance(value, str):
                 clean_value = self.sanitize_string(value)
             elif isinstance(value, dict):

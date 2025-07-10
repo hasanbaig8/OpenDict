@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import UserNotifications
 
 @main
 struct OpenDictApp: App {
@@ -23,6 +24,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var pythonServerProcess: Process?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // Request notification permissions
+        requestNotificationPermissions()
+
         // Start Python transcription server
         startPythonServer()
 
@@ -34,6 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Connect managers
         audioRecorder.accessibilityManager = accessibilityManager
         hotkeyManager.audioRecorder = audioRecorder
+        hotkeyManager.setAccessibilityManager(accessibilityManager)
 
         // Create status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -106,6 +111,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var cancellables = Set<AnyCancellable>()
 
+    private func requestNotificationPermissions() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("Failed to request notification permissions: \(error)")
+            } else if granted {
+                print("Notification permissions granted")
+            }
+        }
+    }
+
     private func updateStatusIcon() {
         guard let button = statusItem.button else { return }
 
@@ -163,6 +178,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return "● Recording..."
         } else if audioRecorder.isTranscribing {
             return "● Transcribing..."
+        } else if !accessibilityManager.hasAccessibilityPermissions {
+            return "⚠️ Accessibility permission needed"
         } else {
             return "Hold Ctrl+Space to record"
         }

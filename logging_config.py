@@ -247,7 +247,7 @@ class LoggingContextManager:
     def __init__(self, logger: OpenDictLogger, **context):
         self.logger = logger
         self.context = context
-        self.old_context = {}
+        self.old_context: Dict[str, Any] = {}
 
     def __enter__(self):
         # Store old context and set new context

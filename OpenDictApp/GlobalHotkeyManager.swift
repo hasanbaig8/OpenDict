@@ -1,12 +1,15 @@
 import Foundation
 import Cocoa
 import Carbon
+import Combine
 
 class GlobalHotkeyManager: ObservableObject {
     @Published var isHotkeyPressed = false
     private var monitors: [Any] = []
+    private var isSetup = false
 
     weak var audioRecorder: AudioRecorder?
+    weak var accessibilityManager: AccessibilityManager?
 
     init() {
         setupGlobalHotkey()
@@ -16,7 +19,35 @@ class GlobalHotkeyManager: ObservableObject {
         cleanup()
     }
 
+    func setAccessibilityManager(_ manager: AccessibilityManager) {
+        self.accessibilityManager = manager
+
+        // Listen for permission changes
+        manager.objectWillChange.sink { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.handlePermissionChange()
+            }
+        }.store(in: &cancellables)
+    }
+
+    private var cancellables = Set<AnyCancellable>()
+
+    private func handlePermissionChange() {
+        guard let accessibilityManager = accessibilityManager else { return }
+
+        if accessibilityManager.hasAccessibilityPermissions && !isSetup {
+            // Permissions were just granted, setup hotkeys
+            setupGlobalHotkey()
+        } else if !accessibilityManager.hasAccessibilityPermissions && isSetup {
+            // Permissions were revoked, cleanup
+            cleanup()
+        }
+    }
+
     private func setupGlobalHotkey() {
+        // Clean up existing monitors first
+        cleanup()
+
         if let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown, .keyUp], handler: { event in
             self.handleHotkeyEvent(event)
         }) {
@@ -29,6 +60,9 @@ class GlobalHotkeyManager: ObservableObject {
         }) {
             monitors.append(localMonitor)
         }
+
+        isSetup = !monitors.isEmpty
+        print("Global hotkey setup completed. Monitors active: \(isSetup)")
     }
 
     private func handleHotkeyEvent(_ event: NSEvent) {
@@ -68,5 +102,7 @@ class GlobalHotkeyManager: ObservableObject {
             NSEvent.removeMonitor(monitor)
         }
         monitors.removeAll()
+        isSetup = false
+        print("Global hotkey monitors cleaned up")
     }
 }

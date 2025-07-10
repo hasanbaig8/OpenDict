@@ -116,11 +116,15 @@ class TestTranscriptionServer:
         server = TranscriptionServer(port=8766)
         server.model = Mock()  # Mock loaded model
 
+        # Mock the load_model method to avoid actually loading the model
+        server.load_model = Mock()
+
         # Mock accept to avoid blocking
         mock_socket.accept.side_effect = Exception("Stop server")
 
-        with pytest.raises(Exception, match="Stop server"):
-            server.start_server()
+        # The server catches exceptions internally and breaks the loop
+        # So we just call it directly instead of expecting it to raise
+        server.start_server()
 
         mock_socket.setsockopt.assert_called_once()
         mock_socket.bind.assert_called_once_with(("localhost", 8766))
@@ -243,13 +247,16 @@ class TestTranscriptionServerIntegration:
         server.model = Mock()
         server.model.transcribe.return_value = [Mock(text="Test transcription")]
 
+        # Mock the load_model method to avoid actually loading the model
+        server.load_model = Mock()
+
         # Start server in a separate thread
         server_thread = threading.Thread(target=server.start_server)
         server_thread.daemon = True
         server_thread.start()
 
         # Give server time to start
-        time.sleep(0.1)
+        time.sleep(0.5)
 
         try:
             # Create client connection

@@ -59,7 +59,8 @@ def transcribe_audio(input_file_path: str) -> str:
     return output[0].text
 
 
-if __name__ == "__main__":
+def main():
+    """Main function for command-line usage."""
     if len(sys.argv) != 2:
         print(json.dumps({"error": "Usage: python transcribe.py <input_file_path>"}))
         sys.exit(1)
@@ -80,3 +81,7 @@ if __name__ == "__main__":
         print(json.dumps(output_data))
     except Exception as e:
         print(json.dumps({"error": str(e)}))
+
+
+if __name__ == "__main__":
+    main()

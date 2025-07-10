@@ -148,40 +148,48 @@ class TestTranscribeMainFunction:
             )
 
     @patch("sys.argv", ["transcribe.py"])
-    @patch("sys.exit")
-    def test_main_function_no_args(self, mock_exit):
+    def test_main_function_no_args(self):
         """Test main function without arguments."""
         import transcribe
 
         # Mock stdout to capture output
         with patch("builtins.print") as mock_print:
-            transcribe.main()
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(1)
+                with pytest.raises(SystemExit):
+                    transcribe.main()
 
-            # Check that usage error was printed
-            mock_print.assert_called_once_with(
-                json.dumps({"error": "Usage: python transcribe.py <input_file_path>"})
-            )
+                # Check that usage error was printed
+                mock_print.assert_called_once_with(
+                    json.dumps(
+                        {"error": "Usage: python transcribe.py <input_file_path>"}
+                    )
+                )
 
-        # Check that script exited with error code
-        mock_exit.assert_called_once_with(1)
+                # Check that script exited with error code
+                mock_exit.assert_called_once_with(1)
 
     @patch("sys.argv", ["transcribe.py", "file1.wav", "file2.wav"])
-    @patch("sys.exit")
-    def test_main_function_too_many_args(self, mock_exit):
+    def test_main_function_too_many_args(self):
         """Test main function with too many arguments."""
         import transcribe
 
         # Mock stdout to capture output
         with patch("builtins.print") as mock_print:
-            transcribe.main()
+            with patch("sys.exit") as mock_exit:
+                mock_exit.side_effect = SystemExit(1)
+                with pytest.raises(SystemExit):
+                    transcribe.main()
 
-            # Check that usage error was printed
-            mock_print.assert_called_once_with(
-                json.dumps({"error": "Usage: python transcribe.py <input_file_path>"})
-            )
+                # Check that usage error was printed
+                mock_print.assert_called_once_with(
+                    json.dumps(
+                        {"error": "Usage: python transcribe.py <input_file_path>"}
+                    )
+                )
 
-        # Check that script exited with error code
-        mock_exit.assert_called_once_with(1)
+                # Check that script exited with error code
+                mock_exit.assert_called_once_with(1)
 
 
 class TestTranscribeIntegration:

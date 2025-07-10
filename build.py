@@ -130,7 +130,10 @@ class PythonBundler:
 
             # Copy configuration
             if os.path.exists("config"):
-                shutil.copytree("config", os.path.join(bundle_dir, "config"))
+                config_dest = os.path.join(bundle_dir, "config")
+                if os.path.exists(config_dest):
+                    shutil.rmtree(config_dest)
+                shutil.copytree("config", config_dest)
                 self.logger.info("Copied config directory to bundle")
 
             # Handle virtual environment

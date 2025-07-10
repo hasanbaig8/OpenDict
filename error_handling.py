@@ -6,7 +6,7 @@ Comprehensive error handling with proper error types and recovery
 import traceback
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional, Type, Union
+from typing import Any, Callable, Dict, Optional, Type, Union
 
 from logging_config import get_logger
 
@@ -251,7 +251,7 @@ class ErrorHandler:
         self.error_counts = {}
         self.recovery_strategies = self._setup_recovery_strategies()
 
-    def _setup_recovery_strategies(self) -> Dict[ErrorCode, callable]:
+    def _setup_recovery_strategies(self) -> Dict[ErrorCode, Callable]:
         """Set up recovery strategies for different error types."""
         return {
             ErrorCode.NETWORK_CONNECTION_FAILED: self._retry_with_backoff,
@@ -385,6 +385,9 @@ class ErrorHandler:
         """Try alternative port for server."""
         if error.retry_count >= 5:
             raise error
+
+        if error.context is None:
+            return False
 
         current_port = error.context.details.get("port", 8765)
         new_port = current_port + error.retry_count + 1

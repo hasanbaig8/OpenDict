@@ -111,7 +111,7 @@ class TestConfigManager:
         config = manager.get_config()
 
         assert isinstance(config, AppConfig)
-        assert config.environment == Environment.DEVELOPMENT.value
+        assert config.environment == "test"  # Due to test environment fixture
 
     def test_config_manager_with_file(self, config_manager):
         """Test configuration manager with config file."""
@@ -193,7 +193,7 @@ class TestConfigManager:
         config = manager.get_config()
 
         # Should use default configuration
-        assert config.environment == Environment.DEVELOPMENT.value
+        assert config.environment == "test"  # Due to test environment fixture
 
     def test_invalid_json_config(self, temp_dir):
         """Test loading invalid JSON config file."""
@@ -204,7 +204,7 @@ class TestConfigManager:
         config = manager.get_config()
 
         # Should use default configuration
-        assert config.environment == Environment.DEVELOPMENT.value
+        assert config.environment == "test"  # Due to test environment fixture
 
 
 class TestGlobalConfig:

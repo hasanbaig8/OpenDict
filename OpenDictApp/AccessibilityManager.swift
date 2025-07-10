@@ -2,6 +2,7 @@ import Foundation
 import ApplicationServices
 import Cocoa
 import Carbon
+import UserNotifications
 
 class AccessibilityManager: ObservableObject {
     @Published var hasAccessibilityPermissions = false
@@ -22,7 +23,28 @@ class AccessibilityManager: ObservableObject {
         ] as CFDictionary)
 
         DispatchQueue.main.async {
+            let oldStatus = self.hasAccessibilityPermissions
             self.hasAccessibilityPermissions = newPermissionStatus
+
+            // If permissions were just granted, show a notification
+            if !oldStatus && newPermissionStatus {
+                self.showPermissionGrantedNotification()
+            }
+        }
+    }
+
+    private func showPermissionGrantedNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "OpenDict Ready!"
+        content.body = "Accessibility permissions granted. Ctrl+Space hotkey is now active."
+        content.sound = UNNotificationSound.default
+
+        let request = UNNotificationRequest(identifier: "permissions-granted", content: content, trigger: nil)
+
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to show notification: \(error)")
+            }
         }
     }
 
@@ -38,14 +60,31 @@ class AccessibilityManager: ObservableObject {
         ] as CFDictionary)
 
         // Check more frequently after requesting permissions
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        startAggressivePermissionChecking()
+    }
+
+    private func startAggressivePermissionChecking() {
+        let checkInterval: TimeInterval = 0.5
+        let maxChecks = 20 // Check for 10 seconds
+        var checkCount = 0
+
+        let aggressiveTimer = Timer.scheduledTimer(withTimeInterval: checkInterval, repeats: true) { timer in
+            checkCount += 1
             self.checkAccessibilityPermissions()
+
+            // Stop aggressive checking if permissions are granted or we've checked enough
+            if self.hasAccessibilityPermissions || checkCount >= maxChecks {
+                timer.invalidate()
+
+                if self.hasAccessibilityPermissions {
+                    print("Accessibility permissions granted! Hotkeys should now work.")
+                }
+            }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            self.checkAccessibilityPermissions()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-            self.checkAccessibilityPermissions()
+
+        // Also invalidate the timer if it's not cleaned up
+        DispatchQueue.main.asyncAfter(deadline: .now() + TimeInterval(maxChecks) * checkInterval + 1.0) {
+            aggressiveTimer.invalidate()
         }
     }
 
