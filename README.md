@@ -5,6 +5,7 @@ A voice-to-text dictation app for macOS that enables system-wide voice recording
 ## 📖 Table of Contents
 
 - [Overview](#overview)
+- [Demo](#demo)
 - [Features](#features)
 - [System Requirements](#system-requirements)
 - [Installation](#installation)
@@ -18,7 +19,21 @@ A voice-to-text dictation app for macOS that enables system-wide voice recording
 
 OpenDict is a macOS menu bar application that provides seamless voice-to-text dictation capabilities. It uses a combination of Swift for the native macOS interface and Python for AI-powered speech recognition using NVIDIA's Parakeet model.
 
-### Key Features
+## 🎬 Demo
+
+See OpenDict in action:
+
+### Claude AI Demo
+Watch OpenDict being used to dictate text directly into Claude AI:
+
+https://github.com/user-attachments/assets/claude_demo.mov
+
+### Notion Demo
+Watch OpenDict being used to create content in Notion:
+
+https://github.com/user-attachments/assets/notion_demo.mov
+
+## ✨ Key Features
 
 - **Global Hotkey Support**: Press `Ctrl+Space` to start/stop recording from any application
 - **Menu Bar Integration**: Clean, unobtrusive menu bar interface
