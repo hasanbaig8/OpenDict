@@ -26,7 +26,7 @@ This guide provides comprehensive information for developers working on OpenDict
 
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/yourusername/opendict.git
    cd opendict
    ```
 
@@ -34,6 +34,10 @@ This guide provides comprehensive information for developers working on OpenDict
    ```bash
    make dev-setup
    ```
+   This command will:
+   - Set up Python virtual environment
+   - Install all dependencies
+   - Install pre-commit hooks
 
 3. **Run tests**:
    ```bash
@@ -43,6 +47,11 @@ This guide provides comprehensive information for developers working on OpenDict
 4. **Start development server**:
    ```bash
    make run-server
+   ```
+
+5. **Run the app** (in another terminal):
+   ```bash
+   make run-app
    ```
 
 ## Architecture Overview
@@ -160,6 +169,8 @@ OpenDict follows a client-server architecture with the following components:
 
 #### Environment Variables
 
+Set these in your shell or `.env` file:
+
 - `OPENDICT_ENV`: Environment (development/staging/production)
 - `OPENDICT_DEBUG`: Enable debug mode (true/false)
 - `OPENDICT_LOG_LEVEL`: Logging level (DEBUG/INFO/WARNING/ERROR)
@@ -168,38 +179,75 @@ OpenDict follows a client-server architecture with the following components:
 - `OPENDICT_MODEL`: Model name (default: nvidia/parakeet-tdt-0.6b-v2)
 - `OPENDICT_CACHE_DIR`: Model cache directory (default: ~/.opendict_cache)
 
-#### Configuration Files
+#### Configuration Management
 
-- `config/development.json`: Development configuration
-- `config/production.json`: Production configuration
-- `.env`: Environment variables (create from `.env.example`)
+Configuration is managed through:
+- Environment variables (highest priority)
+- Command line arguments
+- Configuration files (lowest priority)
+- Built-in defaults
+
+The Makefile automatically handles virtual environment activation and environment setup.
 
 ### Development Workflow
 
-1. **Start development server**:
-   ```bash
-   make run-server
-   ```
+OpenDict uses a Makefile-based workflow for all development tasks:
 
-2. **Run Swift app**:
-   ```bash
-   make run-app
-   ```
+#### Daily Development
 
-3. **Run tests**:
-   ```bash
-   make test
-   ```
+```bash
+# Start your development session
+make run-server        # Terminal 1: Start Python server
+make run-app          # Terminal 2: Start Swift app
 
-4. **Code formatting**:
-   ```bash
-   make format
-   ```
+# Make changes, then verify quality
+make format           # Format code automatically
+make quality-check    # Run all quality checks
+make test            # Run all tests
+```
 
-5. **Quality checks**:
-   ```bash
-   make quality-check
-   ```
+#### Available Make Targets
+
+**Setup and Installation:**
+- `make setup` - Set up development environment
+- `make install` - Install Python dependencies only
+- `make dev-setup` - Complete setup with pre-commit hooks
+
+**Testing:**
+- `make test` - Run all tests
+- `make test-unit` - Run unit tests only
+- `make test-integration` - Run integration tests only
+- `make test-coverage` - Run tests with coverage report
+
+**Code Quality:**
+- `make lint` - Run linting (flake8)
+- `make format` - Format code (black, isort, swiftformat)
+- `make type-check` - Run type checking (mypy)
+- `make security-check` - Run security scanning (bandit)
+- `make quality-check` - Run all quality checks
+- `make pre-commit` - Install pre-commit hooks
+
+**Build and Run:**
+- `make clean` - Clean build artifacts
+- `make build` - Build Swift application
+- `make run-server` - Start Python transcription server
+- `make run-app` - Run Swift application
+
+**Distribution:**
+- `make dist` - Build release distribution
+- `make dist-dev` - Build development distribution
+- `make dist-release` - Build release with DMG and ZIP
+- `make package` - Create installation packages
+- `make clean-dist` - Clean distribution artifacts
+
+**Documentation:**
+- `make docs` - Generate documentation
+- `make help` - Show all available commands
+
+**Convenience Targets:**
+- `make dev-test` - Run format, lint, type-check, and test
+- `make ci-test` - Run full CI test suite
+- `make ci-build` - Run CI build process
 
 ## Code Structure
 
@@ -216,32 +264,30 @@ opendict/
 │   ├── SimpleTranscriptionClient.swift # Server communication
 │   ├── TranscriptionClient.swift # Alternative client
 │   └── Info.plist             # App configuration
-├── config/                     # Configuration files
-│   ├── development.json        # Development config
-│   └── production.json         # Production config
 ├── docs/                       # Documentation
 │   ├── API.md                 # API documentation
-│   ├── DEVELOPER_GUIDE.md     # This file
-│   └── CONTRIBUTING.md        # Contributing guidelines
-├── tests/                      # Test files
+│   └── DEVELOPER_GUIDE.md     # This file
+├── tests/                      # Test files (Python)
 │   ├── conftest.py            # Test fixtures
 │   ├── test_config.py         # Configuration tests
 │   ├── test_transcription_server.py # Server tests
 │   └── test_transcribe.py     # Transcription tests
-├── .github/                    # GitHub Actions
+├── scripts/                    # Build and automation scripts
+│   └── build.sh              # Build script for distributions
+├── .github/                    # GitHub Actions (CI/CD)
 │   └── workflows/
 │       ├── ci.yml             # Continuous integration
 │       └── release.yml        # Release automation
 ├── transcribe_server.py        # Python transcription server
 ├── transcribe.py              # Standalone transcription
-├── config.py                  # Configuration management
-├── logging_config.py          # Logging system
-├── error_handling.py          # Error handling
-├── requirements.txt           # Python dependencies
+├── setup.py                   # Python setup script
+├── requirements.txt           # Python runtime dependencies
 ├── requirements-dev.txt       # Development dependencies
 ├── pyproject.toml            # Python project configuration
-├── Makefile                  # Build automation
+├── Makefile                  # Build automation (NEW)
 ├── Package.swift             # Swift package configuration
+├── .pre-commit-config.yaml   # Pre-commit hooks configuration
+├── .gitignore                # Git ignore rules
 └── README.md                 # Project documentation
 ```
 
@@ -503,14 +549,68 @@ pre-commit run --all-files
 4. **Update documentation**: Keep docs in sync with code
 5. **Test on real hardware**: Especially for audio and accessibility features
 
-### Common Issues
+### Common Development Issues
 
-1. **Model Loading**: First run takes time to download model
-2. **Accessibility Permissions**: Must be granted manually
+#### Build and Setup Issues
+
+1. **Virtual Environment Not Found**:
+   ```bash
+   # Error: Virtual environment not found
+   make setup  # Creates venv and installs dependencies
+   ```
+
+2. **Missing Dependencies**:
+   ```bash
+   # Error: Module not found
+   make install  # Installs all Python dependencies
+   ```
+
+3. **Pre-commit Hooks Failing**:
+   ```bash
+   # Fix formatting issues
+   make format
+   # Run quality checks
+   make quality-check
+   ```
+
+#### Runtime Issues
+
+1. **Model Loading**: First run takes time to download model (~2GB)
+2. **Accessibility Permissions**: Must be granted manually in System Preferences
 3. **Port Conflicts**: Change port if 8765 is in use
-4. **Python Dependencies**: Use virtual environment
+4. **Python Dependencies**: Always use the virtual environment
+
+#### Development Tips
+
+1. **Use Make Commands**: All development tasks are automated
+2. **Pre-commit Hooks**: Installed automatically with `make dev-setup`
+3. **Code Quality**: Run `make quality-check` before committing
+4. **Testing**: Use `make test-coverage` to see test coverage
+5. **Distribution**: Use `make dist` to build release packages
+
+### Release Process
+
+1. **Prepare Release**:
+   ```bash
+   # Ensure all tests pass
+   make ci-test
+
+   # Build distribution packages
+   make dist
+   ```
+
+2. **Create GitHub Release**:
+   - Tag the release: `git tag v1.x.x`
+   - Push tags: `git push --tags`
+   - GitHub Actions will build and publish
+
+3. **Manual Distribution**:
+   ```bash
+   # Create DMG and ZIP packages
+   make package
+   ```
 
 For more detailed information, see:
 - [API Documentation](API.md)
-- [Contributing Guidelines](CONTRIBUTING.md)
 - [Troubleshooting Guide](../README.md#troubleshooting)
+- [GitHub Repository](https://github.com/yourusername/opendict)

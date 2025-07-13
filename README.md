@@ -36,9 +36,34 @@ OpenDict is a macOS menu bar application that provides seamless voice-to-text di
 
 ## 📦 Installation
 
+### Quick Setup (Recommended)
+
 1. **Clone the repository**:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/yourusername/opendict.git
+   cd opendict
+   ```
+
+2. **Set up development environment**:
+   ```bash
+   make setup
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   make install
+   ```
+
+4. **Build the application**:
+   ```bash
+   make build
+   ```
+
+### Manual Setup
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/yourusername/opendict.git
    cd opendict
    ```
 
@@ -266,7 +291,66 @@ Both Python components implement intelligent model caching:
 
 ## 🔧 Development
 
-### Building from Source
+### Quick Start
+
+```bash
+# Set up development environment
+make dev-setup
+
+# Run the transcription server
+make run-server
+
+# In another terminal, run the Swift app
+make run-app
+
+# Run tests
+make test
+
+# Check code quality
+make quality-check
+```
+
+### Available Make Commands
+
+OpenDict includes a comprehensive Makefile for development automation:
+
+#### Setup and Installation
+- `make setup` - Set up development environment
+- `make install` - Install Python dependencies
+- `make dev-setup` - Complete development setup with pre-commit hooks
+
+#### Testing
+- `make test` - Run all tests
+- `make test-unit` - Run unit tests only
+- `make test-integration` - Run integration tests only
+- `make test-coverage` - Run tests with coverage report
+
+#### Code Quality
+- `make lint` - Run linting checks
+- `make format` - Format code (Python and Swift)
+- `make type-check` - Run type checking
+- `make security-check` - Run security checks
+- `make quality-check` - Run all quality checks
+- `make pre-commit` - Install pre-commit hooks
+
+#### Build and Run
+- `make build` - Build Swift application
+- `make run-server` - Start Python transcription server
+- `make run-app` - Run Swift application
+- `make clean` - Clean build artifacts
+
+#### Distribution
+- `make dist` - Build release distribution packages
+- `make dist-dev` - Build development distribution
+- `make package` - Create installation packages (DMG, ZIP)
+
+#### Documentation
+- `make docs` - Generate documentation
+- `make help` - Show all available commands
+
+### Manual Development Setup
+
+If you prefer manual setup:
 
 1. **Install Xcode Command Line Tools**:
    ```bash
@@ -277,7 +361,7 @@ Both Python components implement intelligent model caching:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
-   pip install nemo-toolkit[asr]
+   pip install -r requirements-dev.txt
    ```
 
 3. **Build Swift Application**:
@@ -324,6 +408,17 @@ opendict/
 - nemo-toolkit[asr] (speech recognition)
 - torch (deep learning backend)
 - librosa (audio processing)
+- pytest (testing framework)
+- black (code formatting)
+- flake8 (linting)
+- mypy (type checking)
+- bandit (security scanning)
+- pre-commit (git hooks)
+
+**Development Tools**:
+- SwiftFormat (Swift code formatting)
+- SwiftLint (Swift linting, optional)
+- Sphinx (documentation generation)
 
 ## 🐛 Troubleshooting
 
@@ -384,14 +479,57 @@ To enable verbose logging:
 3. **Memory Usage**: Python server uses ~2-3GB RAM when loaded
 4. **Recording Limit**: 60-second maximum recording time to prevent excessive memory usage
 
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Developer Guide](docs/DEVELOPER_GUIDE.md) for detailed information.
+
+### Quick Contributing Guide
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Make your changes
+4. Run quality checks: `make quality-check`
+5. Run tests: `make test`
+6. Commit your changes: `git commit -m "Add feature"`
+7. Push to your fork: `git push origin feature-name`
+8. Submit a pull request
+
+### Development Workflow
+
+```bash
+# Set up your development environment
+make dev-setup
+
+# Make your changes, then run quality checks
+make format
+make quality-check
+make test
+
+# Build and test the application
+make build
+make run-server  # In one terminal
+make run-app     # In another terminal
+```
+
+## 📄 Documentation
+
+- [Developer Guide](docs/DEVELOPER_GUIDE.md) - Comprehensive development documentation
+- [API Documentation](docs/API.md) - Complete API reference
+- [Troubleshooting](#troubleshooting) - Common issues and solutions
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
 ## 📞 Support
 
-For issues and questions, please open an issue in the GitHub repository.
+For issues and questions, please:
+
+1. Check the [troubleshooting section](#troubleshooting)
+2. Search existing [GitHub issues](https://github.com/hasanbaig8/opendict/issues)
+3. Open a new issue with detailed information
+
+## 🌟 Acknowledgments
+
+- Built with [NVIDIA NeMo](https://github.com/NVIDIA/NeMo) for state-of-the-art speech recognition
+- Uses the Parakeet TDT 0.6B model for fast, accurate transcription

@@ -67,23 +67,82 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func startPythonServer() {
         pythonServerProcess = Process()
         let bundle = Bundle.main
-        let pythonPath = bundle.path(forResource: "venv/bin/python", ofType: nil) ?? "/Users/hasanbaig/Downloads/Code/opendict/venv/bin/python"
-        let scriptPath = bundle.path(forResource: "transcribe_server", ofType: "py") ?? "/Users/hasanbaig/Downloads/Code/opendict/transcribe_server.py"
 
-        pythonServerProcess?.launchPath = pythonPath
-        pythonServerProcess?.arguments = [scriptPath]
+        // Try to find Python in bundle resources first, then fall back to common locations
+        var pythonPath = bundle.path(forResource: "python/venv/bin/python", ofType: nil)
+        if pythonPath == nil {
+            // Try relative to bundle path
+            let bundlePath = bundle.bundlePath
+            let relativePythonPath = bundlePath + "/../venv/bin/python"
+            if FileManager.default.fileExists(atPath: relativePythonPath) {
+                pythonPath = relativePythonPath
+            } else {
+                // Try current working directory venv
+                let currentDirPython = FileManager.default.currentDirectoryPath + "/venv/bin/python"
+                if FileManager.default.fileExists(atPath: currentDirPython) {
+                    pythonPath = currentDirPython
+                } else {
+                    // Fall back to system python3
+                    pythonPath = "/usr/bin/python3"
+                }
+            }
+        }
 
-        // Redirect output to avoid blocking
-        let pipe = Pipe()
-        pythonServerProcess?.standardOutput = pipe
-        pythonServerProcess?.standardError = pipe
+        // Try to find script in bundle resources first, then fall back to relative path
+        var scriptPath = bundle.path(forResource: "python/transcribe_server", ofType: "py")
+        if scriptPath == nil {
+            // Try relative to bundle path
+            let bundlePath = bundle.bundlePath
+            let relativeScriptPath = bundlePath + "/../transcribe_server.py"
+            if FileManager.default.fileExists(atPath: relativeScriptPath) {
+                scriptPath = relativeScriptPath
+            }
+        }
+
+        guard let validPythonPath = pythonPath, let validScriptPath = scriptPath else {
+            print("Failed to locate Python interpreter or transcribe_server.py script")
+            print("Python path attempted: \(pythonPath ?? "nil")")
+            print("Script path attempted: \(scriptPath ?? "nil")")
+            print("Current directory: \(FileManager.default.currentDirectoryPath)")
+            print("Bundle path: \(bundle.bundlePath)")
+            return
+        }
+
+        print("Using Python path: \(validPythonPath)")
+        print("Using script path: \(validScriptPath)")
+
+        pythonServerProcess?.launchPath = validPythonPath
+        pythonServerProcess?.arguments = [validScriptPath]
+
+        // Redirect output to capture logs
+        let outputPipe = Pipe()
+        let errorPipe = Pipe()
+        pythonServerProcess?.standardOutput = outputPipe
+        pythonServerProcess?.standardError = errorPipe
+
+        // Read output asynchronously
+        outputPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty {
+                let output = String(data: data, encoding: .utf8) ?? ""
+                print("Python server output: \(output)")
+            }
+        }
+
+        errorPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty {
+                let error = String(data: data, encoding: .utf8) ?? ""
+                print("Python server error: \(error)")
+            }
+        }
 
         do {
             try pythonServerProcess?.run()
-            print("Python transcription server started")
+            print("Python transcription server started successfully")
 
-            // Give the Python server time to start up
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 2.0) {
+            // Give the Python server time to load the model (can take 10+ seconds)
+            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 15.0) {
                 print("Python server should be ready now")
             }
         } catch {
