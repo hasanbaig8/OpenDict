@@ -68,7 +68,6 @@
 --enable trailingSpace
 --enable wrap
 --enable wrapArguments
---enable wrapParameters
 --enable wrapCollections
 --enable extensionAccessControl
 --enable markTypes
