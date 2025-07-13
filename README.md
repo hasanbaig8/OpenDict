@@ -54,10 +54,11 @@ OpenDict is a macOS menu bar application that provides seamless voice-to-text di
    make install
    ```
 
-4. **Build the application**:
+4. **Build distribution package**:
    ```bash
-   make build
+   make dist
    ```
+   This creates a DMG file in the `dist/` folder that you can install by dragging to Applications.
 
 ### Manual Setup
 
