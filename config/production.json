@@ -1,0 +1,31 @@
+{
+  "environment": "production",
+  "debug": false,
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8765,
+    "max_connections": 10,
+    "connection_timeout": 30,
+    "request_timeout": 120
+  },
+  "transcription": {
+    "model_name": "nvidia/parakeet-tdt-0.6b-v2",
+    "cache_dir": "~/.opendict_cache",
+    "max_audio_duration": 60,
+    "sample_rate": 16000,
+    "channels": 1,
+    "format": "wav"
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    "file": "logs/opendict.log",
+    "max_file_size": 10485760,
+    "backup_count": 5
+  },
+  "security": {
+    "enable_input_validation": true,
+    "max_request_size": 52428800,
+    "allowed_file_types": ["wav", "mp3", "flac", "m4a"]
+  }
+}

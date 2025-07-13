@@ -1,0 +1,27 @@
+[flake8]
+max-line-length = 88
+extend-ignore = E203, E501, W503
+max-complexity = 10
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    .tox
+
+per-file-ignores =
+    # Tests can use assertions and longer lines
+    tests/*: S101, E501
+    # Config files can have longer lines
+    config.py: E501
+
+# Docstring conventions
+docstring-convention = google
+
+# Import order
+import-order-style = google
+application-import-names = opendict
