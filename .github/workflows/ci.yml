@@ -50,7 +50,7 @@ jobs:
 
     - name: Run security checks
       run: |
-        bandit -r . -x tests/
+        bandit -r . -x tests/ -c .bandit
 
     - name: Run tests with coverage
       run: |

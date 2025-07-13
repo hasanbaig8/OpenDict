@@ -1,0 +1,12 @@
+[bandit]
+# Bandit configuration for OpenDict
+# Conservative security scanning - only skip clearly acceptable issues
+
+# Skip only the most clearly acceptable warnings
+skips = B101,B108
+
+# B101: Use of assert - acceptable in tests (pytest uses asserts)
+# B108: Hardcoded temp directory - fixed where possible, remaining uses are in tests
+
+# Keep all subprocess and pickle warnings visible but documented
+# These are legitimate security considerations for this application

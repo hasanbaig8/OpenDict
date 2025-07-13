@@ -33,7 +33,7 @@ def config_manager():
             },
             "transcription": {
                 "model_name": "test_model",
-                "cache_dir": "/tmp/test_cache",
+                "cache_dir": str(temp_dir / "test_cache"),
             },
         }
         import json
