@@ -26,17 +26,13 @@ See OpenDict in action:
 ### Claude AI Demo
 Watch OpenDict being used to dictate text directly into Claude AI:
 
-<video width="600" controls>
-  <source src="claude_demo.mov" type="video/quicktime">
-  Your browser does not support the video tag.
+<video src="claude_demo.mov" controls="controls" style="max-width: 730px;">
 </video>
 
 ### Notion Demo
 Watch OpenDict being used to create content in Notion:
 
-<video width="600" controls>
-  <source src="notion_demo.mov" type="video/quicktime">
-  Your browser does not support the video tag.
+<video src="notion_demo.mov" controls="controls" style="max-width: 730px;">
 </video>
 
 ## ✨ Key Features
