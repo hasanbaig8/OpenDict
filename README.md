@@ -26,14 +26,17 @@ See OpenDict in action:
 ### Claude AI Demo
 Watch OpenDict being used to dictate text directly into Claude AI:
 
-<video src="claude_demo.mov" controls="controls" style="max-width: 730px;">
-</video>
+https://github.com/user-attachments/assets/3c3eeb26-1a5d-4a65-8603-3a9f769756d9
+
+
 
 ### Notion Demo
 Watch OpenDict being used to create content in Notion:
 
-<video src="notion_demo.mov" controls="controls" style="max-width: 730px;">
-</video>
+https://github.com/user-attachments/assets/15baca71-c7fe-4bc1-9fe1-b6657eb9bd39
+
+
+
 
 ## ✨ Key Features
 
