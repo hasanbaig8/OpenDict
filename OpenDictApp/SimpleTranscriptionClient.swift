@@ -30,7 +30,8 @@ class SimpleTranscriptionClient: ObservableObject {
 
                 guard connectResult != -1 else {
                     close(socket)
-                    throw SimpleTranscriptionError.connectionFailed("Failed to connect to server")
+                    let errno_value = errno
+                    throw SimpleTranscriptionError.connectionFailed("Failed to connect to server (errno: \(errno_value)) - server may be down")
                 }
 
                 print("Connected successfully, sending request...")
@@ -55,6 +56,10 @@ class SimpleTranscriptionClient: ObservableObject {
                 }
 
                 print("Request sent, waiting for response...")
+
+                // Set receive timeout (30 seconds)
+                var timeout = timeval(tv_sec: 30, tv_usec: 0)
+                setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
 
                 // Receive response
                 var buffer = [UInt8](repeating: 0, count: 4096)

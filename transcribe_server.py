@@ -2,7 +2,6 @@
 
 import json
 import os
-import pickle
 import socket
 import sys
 import tempfile
@@ -23,42 +22,19 @@ class TranscriptionServer:
         self.server_socket: Optional[socket.socket] = None
         self.running = False
 
-    def get_model_cache_path(self) -> str:
-        """Get the path for the cached model file."""
-        cache_dir = os.path.expanduser("~/.opendict_cache")
-        os.makedirs(cache_dir, exist_ok=True)
-        return os.path.join(cache_dir, "parakeet_model.pkl")
-
     def load_model(self) -> None:
-        """Load model from cache or create cache if not exists."""
-        cache_path = self.get_model_cache_path()
-
-        if os.path.exists(cache_path):
-            print("Loading cached model...", file=sys.stderr)
-            try:
-                with open(cache_path, "rb") as f:
-                    self.model = pickle.load(f)
-                print("Cached model loaded successfully!", file=sys.stderr)
-                return
-            except Exception as e:
-                print(f"Failed to load cached model: {e}", file=sys.stderr)
-                print("Will load fresh model...", file=sys.stderr)
-
-        print("Loading fresh model (this may take a moment)...", file=sys.stderr)
+        """Load model using NeMo's built-in caching."""
+        print("Loading model (using built-in cache if available)...", file=sys.stderr)
         start_time = time.time()
+
+        # NeMo automatically caches models in ~/.cache/huggingface/hub/
+        # No need for custom pickle caching
         self.model = nemo_asr.models.ASRModel.from_pretrained(
             model_name="nvidia/parakeet-tdt-0.6b-v2"
         )
+
         load_time = time.time() - start_time
         print(f"Model loaded in {load_time:.2f} seconds", file=sys.stderr)
-
-        print("Caching model for future use...", file=sys.stderr)
-        try:
-            with open(cache_path, "wb") as f:
-                pickle.dump(self.model, f)
-            print("Model cached successfully!", file=sys.stderr)
-        except Exception as e:
-            print(f"Failed to cache model: {e}", file=sys.stderr)
 
     def transcribe_audio(self, audio_file_path: str) -> str:
         """Transcribe audio file."""
@@ -91,14 +67,22 @@ class TranscriptionServer:
             except Exception as e:
                 if self.running:
                     print(f"Server error: {e}", file=sys.stderr)
-                break
+                continue
 
     def handle_client(self, client_socket: socket.socket) -> None:
         """Handle client connection."""
         try:
             print("Client connected", file=sys.stderr)
+
+            # Set socket timeout to prevent hanging
+            client_socket.settimeout(60.0)
+
             # Receive request
             data = client_socket.recv(1024).decode("utf-8")
+            if not data.strip():
+                print("Received empty request, closing connection", file=sys.stderr)
+                return
+
             print(f"Received request: {data}", file=sys.stderr)
             request = json.loads(data)
 

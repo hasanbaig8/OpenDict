@@ -68,34 +68,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         pythonServerProcess = Process()
         let bundle = Bundle.main
 
-        // Try to find Python in bundle resources first, then fall back to common locations
-        var pythonPath = bundle.path(forResource: "python/venv/bin/python", ofType: nil)
-        if pythonPath == nil {
-            // Try relative to bundle path
-            let bundlePath = bundle.bundlePath
-            let relativePythonPath = bundlePath + "/../venv/bin/python"
-            if FileManager.default.fileExists(atPath: relativePythonPath) {
-                pythonPath = relativePythonPath
+        // Find Python interpreter
+        var pythonPath: String?
+
+        // Get bundle path and derive project directory
+        let bundlePath = bundle.bundlePath
+        let projectDir = URL(fileURLWithPath: bundlePath).deletingLastPathComponent().path
+
+        // First try the venv in the project directory
+        let projectVenvPython = projectDir + "/venv/bin/python"
+        if FileManager.default.fileExists(atPath: projectVenvPython) {
+            pythonPath = projectVenvPython
+        } else {
+            // Try current working directory venv
+            let currentDirPython = FileManager.default.currentDirectoryPath + "/venv/bin/python"
+            if FileManager.default.fileExists(atPath: currentDirPython) {
+                pythonPath = currentDirPython
             } else {
-                // Try current working directory venv
-                let currentDirPython = FileManager.default.currentDirectoryPath + "/venv/bin/python"
-                if FileManager.default.fileExists(atPath: currentDirPython) {
-                    pythonPath = currentDirPython
-                } else {
-                    // Fall back to system python3
-                    pythonPath = "/usr/bin/python3"
-                }
+                // Fall back to system python3
+                pythonPath = "/usr/bin/python3"
             }
         }
 
-        // Try to find script in bundle resources first, then fall back to relative path
-        var scriptPath = bundle.path(forResource: "python/transcribe_server", ofType: "py")
-        if scriptPath == nil {
-            // Try relative to bundle path
-            let bundlePath = bundle.bundlePath
-            let relativeScriptPath = bundlePath + "/../transcribe_server.py"
-            if FileManager.default.fileExists(atPath: relativeScriptPath) {
-                scriptPath = relativeScriptPath
+        // Find the transcribe_server.py script
+        var scriptPath: String?
+
+        // First try the project directory
+        let projectScriptPath = projectDir + "/transcribe_server.py"
+        if FileManager.default.fileExists(atPath: projectScriptPath) {
+            scriptPath = projectScriptPath
+        } else {
+            // Try current working directory
+            let currentDirScript = FileManager.default.currentDirectoryPath + "/transcribe_server.py"
+            if FileManager.default.fileExists(atPath: currentDirScript) {
+                scriptPath = currentDirScript
+            } else {
+                // Try in bundle resources
+                scriptPath = bundle.path(forResource: "transcribe_server", ofType: "py")
             }
         }
 
@@ -105,6 +114,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             print("Script path attempted: \(scriptPath ?? "nil")")
             print("Current directory: \(FileManager.default.currentDirectoryPath)")
             print("Bundle path: \(bundle.bundlePath)")
+            print("Project directory: \(projectDir)")
+            print("Looking for Python at: \(projectDir)/venv/bin/python")
+            print("Looking for script at: \(projectDir)/transcribe_server.py")
             return
         }
 
@@ -113,6 +125,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         pythonServerProcess?.launchPath = validPythonPath
         pythonServerProcess?.arguments = [validScriptPath]
+
+        // Set working directory to project directory
+        pythonServerProcess?.currentDirectoryPath = projectDir
+
+        // Set up environment variables
+        var environment = ProcessInfo.processInfo.environment
+        if let existingPath = environment["PATH"] {
+            environment["PATH"] = "\(projectDir)/venv/bin:\(existingPath)"
+        } else {
+            environment["PATH"] = "\(projectDir)/venv/bin:/usr/local/bin:/usr/bin:/bin"
+        }
+        pythonServerProcess?.environment = environment
 
         // Redirect output to capture logs
         let outputPipe = Pipe()
@@ -134,6 +158,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if !data.isEmpty {
                 let error = String(data: data, encoding: .utf8) ?? ""
                 print("Python server error: \(error)")
+            }
+        }
+
+        // Add termination handler to monitor server crashes
+        pythonServerProcess?.terminationHandler = { [weak self] process in
+            print("Python server terminated with status: \(process.terminationStatus)")
+            if process.terminationStatus != 0 && process.terminationStatus != 15 { // Don't restart if killed intentionally
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    print("Attempting to restart crashed Python server...")
+                    self?.startPythonServer()
+                }
             }
         }
 
