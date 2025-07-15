@@ -2,6 +2,7 @@ import SwiftUI
 import AppKit
 import Combine
 import UserNotifications
+import Foundation
 
 @main
 struct OpenDictApp: App {
@@ -24,9 +25,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var pythonServerProcess: Process?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Request notification permissions
-        requestNotificationPermissions()
-
         // Start Python transcription server
         startPythonServer()
 
@@ -62,79 +60,49 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Observe recording state changes
         setupObservers()
+
+        // Request notification permissions (after other setup)
+        // requestNotificationPermissions() // Disabled for development
     }
 
     private func startPythonServer() {
         pythonServerProcess = Process()
-        let bundle = Bundle.main
+
+        // Find the project directory by looking for key files
+        let projectDir = findProjectDirectory()
 
         // Find Python interpreter
-        var pythonPath: String?
-
-        // Get bundle path and derive project directory
-        let bundlePath = bundle.bundlePath
-        let projectDir = URL(fileURLWithPath: bundlePath).deletingLastPathComponent().path
-
-        // First try the venv in the project directory
-        let projectVenvPython = projectDir + "/venv/bin/python"
-        if FileManager.default.fileExists(atPath: projectVenvPython) {
-            pythonPath = projectVenvPython
-        } else {
-            // Try current working directory venv
-            let currentDirPython = FileManager.default.currentDirectoryPath + "/venv/bin/python"
-            if FileManager.default.fileExists(atPath: currentDirPython) {
-                pythonPath = currentDirPython
-            } else {
-                // Fall back to system python3
-                pythonPath = "/usr/bin/python3"
-            }
-        }
+        let pythonPath = findPythonInterpreter(projectDir: projectDir)
 
         // Find the transcribe_server.py script
-        var scriptPath: String?
-
-        // First try the project directory
-        let projectScriptPath = projectDir + "/transcribe_server.py"
-        if FileManager.default.fileExists(atPath: projectScriptPath) {
-            scriptPath = projectScriptPath
-        } else {
-            // Try current working directory
-            let currentDirScript = FileManager.default.currentDirectoryPath + "/transcribe_server.py"
-            if FileManager.default.fileExists(atPath: currentDirScript) {
-                scriptPath = currentDirScript
-            } else {
-                // Try in bundle resources
-                scriptPath = bundle.path(forResource: "transcribe_server", ofType: "py")
-            }
-        }
+        let scriptPath = findTranscribeScript(projectDir: projectDir)
 
         guard let validPythonPath = pythonPath, let validScriptPath = scriptPath else {
             print("Failed to locate Python interpreter or transcribe_server.py script")
-            print("Python path attempted: \(pythonPath ?? "nil")")
-            print("Script path attempted: \(scriptPath ?? "nil")")
-            print("Current directory: \(FileManager.default.currentDirectoryPath)")
-            print("Bundle path: \(bundle.bundlePath)")
+            print("Python path: \(pythonPath ?? "nil")")
+            print("Script path: \(scriptPath ?? "nil")")
             print("Project directory: \(projectDir)")
-            print("Looking for Python at: \(projectDir)/venv/bin/python")
-            print("Looking for script at: \(projectDir)/transcribe_server.py")
+            print("Current directory: \(FileManager.default.currentDirectoryPath)")
+            print("Bundle path: \(Bundle.main.bundlePath)")
             return
         }
 
-        print("Using Python path: \(validPythonPath)")
-        print("Using script path: \(validScriptPath)")
+        print("Starting Python server...")
+        print("Project directory: \(projectDir)")
+        print("Python path: \(validPythonPath)")
+        print("Script path: \(validScriptPath)")
 
         pythonServerProcess?.launchPath = validPythonPath
         pythonServerProcess?.arguments = [validScriptPath]
-
-        // Set working directory to project directory
         pythonServerProcess?.currentDirectoryPath = projectDir
 
         // Set up environment variables
         var environment = ProcessInfo.processInfo.environment
+        let venvBinPath = "\(projectDir)/venv/bin"
         if let existingPath = environment["PATH"] {
-            environment["PATH"] = "\(projectDir)/venv/bin:\(existingPath)"
+            environment["PATH"] = "\(venvBinPath):\(existingPath)"
         } else {
-            environment["PATH"] = "\(projectDir)/venv/bin:/usr/local/bin:/usr/bin:/bin"
+            environment["PATH"] = "\(venvBinPath):/usr/local/bin:/usr/bin:/bin"
         }
         pythonServerProcess?.environment = environment
 
@@ -176,12 +144,123 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             try pythonServerProcess?.run()
             print("Python transcription server started successfully")
 
-            // Give the Python server time to load the model (can take 10+ seconds)
-            DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 15.0) {
-                print("Python server should be ready now")
-            }
+            // Wait for the server to be ready by checking if port is available
+            waitForServerReady()
         } catch {
             print("Failed to start Python server: \(error)")
+        }
+    }
+
+    private func findProjectDirectory() -> String {
+        let fileManager = FileManager.default
+        let currentDir = fileManager.currentDirectoryPath
+
+        // Check if we're already in the project directory
+        if fileManager.fileExists(atPath: "\(currentDir)/transcribe_server.py") &&
+           fileManager.fileExists(atPath: "\(currentDir)/venv/bin/python") {
+            return currentDir
+        }
+
+        // Try to find the project directory relative to the bundle
+        let bundlePath = Bundle.main.bundlePath
+        let bundleDir = URL(fileURLWithPath: bundlePath).deletingLastPathComponent().path
+
+        // Check bundle parent directory
+        if fileManager.fileExists(atPath: "\(bundleDir)/transcribe_server.py") &&
+           fileManager.fileExists(atPath: "\(bundleDir)/venv/bin/python") {
+            return bundleDir
+        }
+
+        // Check common development paths
+        let possiblePaths = [
+            currentDir,
+            bundleDir,
+            "\(NSHomeDirectory())/Downloads/Code/opendict",
+            "\(NSHomeDirectory())/Development/opendict",
+            "\(NSHomeDirectory())/Projects/opendict"
+        ]
+
+        for path in possiblePaths {
+            if fileManager.fileExists(atPath: "\(path)/transcribe_server.py") &&
+               fileManager.fileExists(atPath: "\(path)/venv/bin/python") {
+                return path
+            }
+        }
+
+        // Fall back to current directory
+        return currentDir
+    }
+
+    private func findPythonInterpreter(projectDir: String) -> String? {
+        let fileManager = FileManager.default
+
+        // Priority order: project venv, current dir venv, system python
+        let possiblePaths = [
+            "\(projectDir)/venv/bin/python",
+            "\(FileManager.default.currentDirectoryPath)/venv/bin/python",
+            "/usr/bin/python3",
+            "/usr/local/bin/python3"
+        ]
+
+        for path in possiblePaths {
+            if fileManager.fileExists(atPath: path) {
+                return path
+            }
+        }
+
+        return nil
+    }
+
+    private func findTranscribeScript(projectDir: String) -> String? {
+        let fileManager = FileManager.default
+
+        // Priority order: project dir, current dir, bundle resources
+        let possiblePaths = [
+            "\(projectDir)/transcribe_server.py",
+            "\(FileManager.default.currentDirectoryPath)/transcribe_server.py",
+            Bundle.main.path(forResource: "transcribe_server", ofType: "py")
+        ].compactMap { $0 }
+
+        for path in possiblePaths {
+            if fileManager.fileExists(atPath: path) {
+                return path
+            }
+        }
+
+        return nil
+    }
+
+    private func waitForServerReady() {
+        // Check if server is ready by trying to connect to port 8765
+        DispatchQueue.global(qos: .utility).async {
+            var attempts = 0
+            let maxAttempts = 30 // 30 seconds timeout
+
+            while attempts < maxAttempts {
+                let sock = Darwin.socket(AF_INET, SOCK_STREAM, 0)
+                var addr = sockaddr_in()
+                addr.sin_family = sa_family_t(AF_INET)
+                addr.sin_port = UInt16(8765).bigEndian
+                addr.sin_addr.s_addr = inet_addr("127.0.0.1")
+
+                let result = withUnsafePointer(to: &addr) { pointer in
+                    pointer.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPointer in
+                        Darwin.connect(sock, sockaddrPointer, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    }
+                }
+
+                Darwin.close(sock)
+
+                if result == 0 {
+                    print("Python server is ready!")
+                    return
+                }
+
+                attempts += 1
+                Thread.sleep(forTimeInterval: 1.0)
+            }
+
+            print("Warning: Python server may not be ready after \(maxAttempts) seconds")
         }
     }
 
